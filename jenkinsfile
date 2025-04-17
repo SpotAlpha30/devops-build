@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_HUB_USER = 'sudharsan30'
+        IMAGE_NAME_DEV = "${DOCKER_HUB_USER}/devops-app-dev"
+        IMAGE_NAME_PROD = "${DOCKER_HUB_USER}/devops-app-prod"
+    }
+    stages {
+        stage('Clone Repo') {
+            steps {
+                echo 'Cloning source code...'
+                git branch: env.BRANCH_NAME, credentialsId: 'github-creds', url: 'https://github.com/sriram-R-krishnan/devops-build.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t devops-app:latest .'
+            }
+        }
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
+                }
+            }
+        }
+        stage('Tag & Push Image') {
+            steps {
+                script {
+                    def imageName = env.BRANCH_NAME == "master" ? IMAGE_NAME_PROD : IMAGE_NAME_DEV
+                    sh """
+                        docker tag devops-app:latest ${imageName}:latest
+                        docker push ${imageName}:latest
+                    """
+                }
+            }
+        }
+        stage('Deploy to Server (Dev Only)') {
+            when {
+                branch 'dev'
+            }
+            steps {
+                sh './deploy.sh'
+            }
+        }
+    }
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
+}
+
