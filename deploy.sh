@@ -1,14 +1,23 @@
 #!/bin/bash
+# Deploy Docker image
+IMAGE_NAME=$1
+TAG=$2
+if [ -z "$IMAGE_NAME" ] || [ -z "$TAG" ]; then
+  echo "Usage: $0 <image_name> <tag>"
+  exit 1
+fi
 
-# Stop and remove existing containers
+echo "Pulling image: $IMAGE_NAME:$TAG"
+docker pull $IMAGE_NAME:$TAG
+if [ $? -ne 0 ]; then
+  echo "Failed to pull $IMAGE_NAME:$TAG. Exiting."
+  exit 1
+fi
+
 echo "Stopping and removing existing containers..."
-docker compose down
+docker-compose down
 
-# Pull the latest image (optional, if using Docker Hub)
-# docker pull <your-dockerhub-username>/devops-build:latest
-
-# Deploy the application
 echo "Deploying application..."
-docker compose up -d
+TAG=$TAG docker-compose up -d
 
 echo "Deployment complete."
