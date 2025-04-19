@@ -1,53 +1,38 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_USER = 'sudharsan30'
-        IMAGE_NAME_DEV = "${DOCKER_HUB_USER}/devops-app-dev"
-        IMAGE_NAME_PROD = "${DOCKER_HUB_USER}/devops-app-prod"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        GITHUB_CREDENTIALS = credentials('github')
     }
     stages {
-        stage('Clone Repo') {
+        stage('Checkout') {
             steps {
-                echo 'Cloning source code...'
-                git branch: env.BRANCH_NAME, credentialsId: 'github-creds', url: 'https://github.com/sriram-R-krishnan/devops-build.git'
+                git branch: "${env.BRANCH_NAME}", credentialsId: 'github', url: 'https://github.com/SpotAlpha30/my-devops-build.git'
             }
         }
-        stage('Build Docker Image') {
+        stage('Build') {
             steps {
-                sh 'docker build -t devops-app:latest .'
+                sh './build.sh sudharsan30/${
+                    env.BRANCH_NAME == "master" ? "prod" : "dev"
+                } latest'
             }
         }
-        stage('Login to Docker Hub') {
+        stage('Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
-                }
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh 'docker push sudharsan30/${
+                    env.BRANCH_NAME == "master" ? "prod" : "dev"
+                }:latest'
+                sh 'docker logout'
             }
         }
-        stage('Tag & Push Image') {
-            steps {
-                script {
-                    def imageName = env.BRANCH_NAME == "master" ? IMAGE_NAME_PROD : IMAGE_NAME_DEV
-                    sh """
-                        docker tag devops-app:latest ${imageName}:latest
-                        docker push ${imageName}:latest
-                    """
-                }
-            }
-        }
-        stage('Deploy to Server (Dev Only)') {
+        stage('Deploy') {
             when {
-                branch 'dev'
+                branch 'master'
             }
             steps {
-                sh './deploy.sh'
+                sh './deploy.sh sudharsan30/devops-app-prod latest'
             }
-        }
-    }
-    post {
-        always {
-            sh 'docker logout'
         }
     }
 }
-
