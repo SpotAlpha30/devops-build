@@ -1,7 +1,13 @@
-version: '3.8'
 services:
-  web:
-    build: .
+  app:
+    image: sudharsan30/prod:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "80:80"
-    restart: always
+    environment:
+      - FLASK_ENV=production
+networks:
+  default:
+    name: devops-build_default
