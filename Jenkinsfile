@@ -12,13 +12,13 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh './build.sh sudharsan30/${env.BRANCH_NAME == "main" ? "prod" : "dev"} latest'
+                sh './build.sh your-actual-username/${env.BRANCH_NAME == "main" ? "prod" : "dev"} latest'
             }
         }
         stage('Push') {
             steps {
                 sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                sh 'docker push sudharsan30/${env.BRANCH_NAME == "main" ? "prod" : "dev"}:latest'
+                sh 'docker push your-actual-username/${env.BRANCH_NAME == "main" ? "prod" : "dev"}:latest'
                 sh 'docker logout'
             }
         }
@@ -27,7 +27,7 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh './deploy.sh sudharsan30/prod latest'
+                sh './deploy.sh your-actual-username/prod latest'
             }
         }
     }
