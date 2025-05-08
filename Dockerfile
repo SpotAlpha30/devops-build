@@ -1,7 +1,15 @@
-FROM python:3.9-slim
+# Build stage
+FROM node:18-alpine AS build
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY package*.json ./
+RUN npm install && npm install react-scripts --save
 COPY . .
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN npm run build
+
+# Production stage
+FROM nginx:stable-alpine
+COPY --from=build /app/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-CMD ["python", "app.py"]
+CMD ["nginx", "-g", "daemon off;"]

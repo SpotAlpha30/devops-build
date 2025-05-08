@@ -1,11 +1,17 @@
 #!/bin/bash
-
 # Build Docker image
-echo "Building Docker image..."
-docker build -t devops-build:latest .
+IMAGE_NAME=$1
+TAG=$2
+if [ -z "$IMAGE_NAME" ] || [ -z "$TAG" ]; then
+echo "Usage: $0 <image_name> <tag>"
+exit 1
+fi
 
-# Tag image for Docker Hub (replace <your-dockerhub-username> with your Docker Hub username)
-echo "Tagging image..."
-docker tag devops-build:latest <sudharsan30>/devops-build:latest
+echo "Building image: $IMAGE_NAME:$TAG"
+docker build -t "$IMAGE_NAME:$TAG" .
+if [ $? -ne 0 ]; then
+echo "Failed to build $IMAGE_NAME:$TAG. Exiting."
+exit 1
+fi
 
 echo "Build complete."
