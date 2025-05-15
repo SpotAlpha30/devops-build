@@ -7,20 +7,21 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: 'github', url: 'https://github.com/SpotAlpha30/devops-build.git'
+                // Specify branch explicitly to avoid Jenkins defaulting to master
+                git branch: 'main', credentialsId: 'github', url: 'https://github.com/SpotAlpha30/devops-build.git'
             }
         }
 
         stage('Build') {
             steps {
-                sh './build.sh'
+                sh './build.sh build' // Suggest separating build and push in your script
             }
         }
 
         stage('Push') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                    sh './build.sh'
+                    sh './build.sh push' // Push image separately for clarity
                 }
             }
         }
