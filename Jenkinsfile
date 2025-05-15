@@ -1,48 +1,33 @@
 pipeline {
     agent any
-
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        IMAGE_NAME = "sudharsan30/dev"
+        TAG = "latest"
     }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github', url: 'https://github.com/SpotAlpha30/devops-build.git'
+                git credentialsId: 'github', url: 'https://github.com/SpotAlpha30/devops-build.git'
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    def imageTag = (env.BRANCH_NAME == 'main') ? 'prod' : 'dev'
-                    sh "./build.sh Sudharsan30/${imageTag} latest"
-                }
+                sh './build.sh'
             }
         }
 
         stage('Push') {
             steps {
-                script {
-                    def imageTag = (env.BRANCH_NAME == 'main') ? 'prod' : 'dev'
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                        sh '''
-                            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
-                        '''
-                        sh "docker push Sudharsan30/${imageTag}:latest"
-                        sh "docker logout"
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+                    sh './build.sh'
                 }
             }
         }
 
         stage('Deploy') {
-            when {
-                branch 'main'
-            }
             steps {
-                sh './deploy.sh Sudharsan30/prod latest'
+                echo 'Deploy stage (implement as needed)'
             }
         }
     }
