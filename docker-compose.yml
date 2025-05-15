@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     image: sudharsan30/prod:${TAG:-latest}
     container_name: devops-build-web-1
     ports:
@@ -15,4 +13,3 @@ services:
 networks:
   devops-build-network:
     name: devops-build_default
-
